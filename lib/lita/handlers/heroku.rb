@@ -32,7 +32,7 @@ module Lita
       end
 
       route(/^hk deploy\s+(.+)/, :heroku_deploy, command: true, help: {
-        "hk deploy [environment]" => "example: 'lita hk deploy production'"
+        "hk deploy [environment]" => "example: 'lita hk production deploy'"
       })
 
       def heroku_deploy(response)
@@ -44,7 +44,10 @@ module Lita
         build_response = JSON.parse build_response
 
         if build_response.key?("build") && build_response["build"]["status"] == "pending"
-          response.reply("Started deploy")
+          response.reply("Started deploy.")
+        else
+          $stdout.puts build_response
+          response.reply("Deploy could not be started. Check my logs for more information.")
         end
       end
 
