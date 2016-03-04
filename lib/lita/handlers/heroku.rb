@@ -6,7 +6,7 @@ module Lita
       config :application_id, required: true
 
       route(/^hk\s+([^ ]+)\s+(.+)/, :heroku_cmd, command: true, help: {
-        "heroku deploy [environment]" => "example: 'lita heroku deploy production'"
+        "hk [app name] [command]" => "example: 'lita hk production ps'"
       })
 
       def heroku_cmd(response)
@@ -32,7 +32,7 @@ module Lita
       end
 
       route(/^hk deploy\s+(.+)/, :heroku_deploy, command: true, help: {
-        "heroku deploy [environment]" => "example: 'lita heroku deploy production'"
+        "hk deploy [environment]" => "example: 'lita hk deploy production'"
       })
 
       def heroku_deploy(response)
