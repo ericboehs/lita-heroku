@@ -37,8 +37,9 @@ module Lita
 
       def heroku_deploy(response)
         bearer = config.oauth_token
-        app_name = "#{config.app_prefix}#{response.matches[0][0]}"
-        branch = response.matches[0][1] || "master"
+        app_name, branch = response.matches[0][0].split
+        app_name = "#{config.app_prefix}#{app_name}" unless app_name.start_with? config.app_prefix
+        branch ||= "master"
 
         apps = JSON.parse `curl -s "https://api.heroku.com/apps" -H "Authorization: Bearer #{bearer}" -H 'Accept: application/vnd.heroku+json; version=3'`
         app = apps.select{|app| app["name"] == app_name }.first
