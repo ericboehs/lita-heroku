@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "lita-heroku"
-  spec.version       = "0.1.5"
+  spec.version       = "0.1.6"
   spec.authors       = ["Eric Boehs"]
   spec.email         = ["ericboehs@gmail.com"]
   spec.description   = "Lita handler for interacting with Heroku Apps"

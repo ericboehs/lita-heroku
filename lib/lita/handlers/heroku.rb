@@ -14,7 +14,7 @@ module Lita
       def heroku_cmd(response)
         environment = response.matches[0][0]
         command = response.matches[0][1]
-        if command == "deploy"
+        if command.start_with? "deploy"
           heroku_deploy response
         else
           stdout, stderr, status = Open3.capture3 "#{heroku_bin} #{command} -a #{config.app_prefix}#{environment}"
@@ -41,7 +41,7 @@ module Lita
 
       def heroku_deploy(response)
         bearer = config.oauth_token
-        app_name, branch = response.matches[0][0].split
+        app_name, command, branch = response.matches[0].join(" ").split
         app_name = "#{config.app_prefix}#{app_name}" unless app_name.start_with? config.app_prefix
         branch ||= "master"
 
