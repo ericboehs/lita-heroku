@@ -1,4 +1,5 @@
 require "json"
+require "open3"
 module Lita
   module Handlers
     class Heroku < Handler
@@ -15,7 +16,13 @@ module Lita
         if command == "deploy"
           heroku_deploy response
         else
-          response.reply `#{heroku_bin} #{command} -a #{config.app_prefix}#{environment}`
+          stdout, stderr, status = Open3.capture3 "#{heroku_bin} #{command} -a #{config.app_prefix}#{environment}"
+          response_text = "```\n"
+          response_text += stdout
+          response_text += stderr
+          response_text += "Exited with status #{status.exitstatus}" unless status.exitstatus.zero?
+          response_text += "```"
+          response.reply response_text
         end
       end
 
