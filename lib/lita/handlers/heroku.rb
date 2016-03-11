@@ -5,6 +5,7 @@ module Lita
     class Heroku < Handler
       config :oauth_token, required: true
       config :app_prefix
+      config :bitly_access_token
 
       route(/^hk\s+([^ ]+)\s+(.+)/, :heroku_cmd, command: true, help: {
         "hk [app name] [command]" => "example: 'lita hk production ps'",
@@ -52,10 +53,15 @@ module Lita
         build_response = `curl -s "https://kolkrabbi.herokuapp.com/apps/#{app_id}/github/push" -H "Authorization: Bearer #{bearer}" -d '{"branch":"#{branch}"}'`
         build_response = JSON.parse build_response
 
+        $stdout.puts build_response
         if build_response.key?("build") && build_response["build"]["status"] == "pending"
-          response.reply("Deploying #{branch} to #{app_name}.")
+          response_text = "Deploying #{branch} to #{app_name}. "
+          if config.bitly_access_token
+            bitly_response = JSON.parse `curl -sGX GET --data-urlencode "longUrl=#{build_response["build"]["output_stream_url"]}" "https://api-ssl.bitly.com/v3/shorten?access_token=#{config.bitly_access_token}"`
+            response_text += "Build output at: #{bitly_response['data']['url']}."
+          end
+          response.reply response_text
         else
-          $stdout.puts build_response
           response.reply("Deploy could not be started. Response: #{build_response}")
         end
       end
