@@ -7,7 +7,8 @@ module Lita
       config :app_prefix
 
       route(/^hk\s+([^ ]+)\s+(.+)/, :heroku_cmd, command: true, help: {
-        "hk [app name] [command]" => "example: 'lita hk production ps'"
+        "hk [app name] [command]" => "example: 'lita hk production ps'",
+        "hk [app name] deploy" => "example: 'lita hk production deploy'"
       })
 
       def heroku_cmd(response)
@@ -37,10 +38,6 @@ module Lita
           "heroku"
         end
       end
-
-      route(/^hk deploy\s+(.+)/, :heroku_deploy, command: true, help: {
-        "hk [environment] deploy" => "example: 'lita hk production deploy'"
-      })
 
       def heroku_deploy(response)
         bearer = config.oauth_token
