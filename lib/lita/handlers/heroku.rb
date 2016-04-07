@@ -18,13 +18,7 @@ module Lita
         if command.start_with? "deploy"
           heroku_deploy response
         else
-          stdout, stderr, status = Open3.capture3 "#{heroku_bin} #{command} -a #{config.app_prefix}#{environment}"
-          response_text = "```\n"
-          response_text += stdout
-          response_text += stderr
-          response_text += "Exited with status #{status.exitstatus}" unless status.exitstatus.zero?
-          response_text += "```"
-          response.reply response_text
+          stream_command response, "#{heroku_bin} #{command} -a #{config.app_prefix}#{environment}"
         end
       end
 
@@ -54,6 +48,7 @@ module Lita
         build_response = JSON.parse build_response
 
         $stdout.puts build_response
+
         if build_response.key?("build") && build_response["build"]["status"] == "pending"
           response_text = "Deploying #{branch} to #{app_name}. "
           if config.bitly_access_token
@@ -70,6 +65,45 @@ module Lita
         cmd  = %Q{curl -s "https://kolkrabbi.herokuapp.com#{uri}" -H "Authorization: Bearer #{bearer}" -H 'range: name ..; order=asc, max=1000'}
         cmd += %Q{-d '#{data}'} if data
         JSON.parse `#{cmd}`
+      end
+
+      private
+
+      def stream_command response, command
+        channel = response.message.source.room
+
+        Open3.popen2e(command) do |stdin, stdout_and_stderr, thread|
+          response.reply "```\nStarting `#{command.gsub "\n", '\\n'}`:\n```"
+          timestamp, text = get_last_message channel
+
+          last_update = Time.now.to_i - 2
+          text_response = String.new
+
+          while line = stdout_and_stderr.gets
+            text.gsub!("```", "")
+            text += line
+            text_response = "```#{text}```"
+            if Time.now.to_i - last_update > 2
+              last_update = Time.now.to_i
+              update_response channel, timestamp, text_response
+            end
+          end
+          update_response channel, timestamp, text_response
+        end
+      end
+
+      def update_response channel, timestamp, text
+        robot.chat_service.api.send(
+          :call_api, "chat.update", { channel: channel, ts: timestamp, as_user: true, text: text }
+        )
+      end
+
+      def get_last_message channel
+        # Would be nice if we could get this from the `response.reply`
+        msg = robot.chat_service.api.send(
+          :call_api, "im.history", { channel: channel, count: 1 } # Probably need to filter
+        )
+        [msg["messages"][0]["ts"], msg["messages"][0]["text"]]
       end
 
       Lita.register_handler(self)
