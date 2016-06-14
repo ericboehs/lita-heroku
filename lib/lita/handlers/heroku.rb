@@ -53,7 +53,7 @@ module Lita
           response_text = "Deploying #{branch} to #{app_name}. "
           if config.bitly_access_token
             bitly_response = JSON.parse `curl -sGX GET --data-urlencode "longUrl=#{build_response["build"]["output_stream_url"]}" "https://api-ssl.bitly.com/v3/shorten?access_token=#{config.bitly_access_token}"`
-            response_text += "Build output at: #{bitly_response['data']['url']}."
+            response_text += "To see build log: `curl -L #{bitly_response['data']['url']}`"
           end
           response.reply response_text
         else
