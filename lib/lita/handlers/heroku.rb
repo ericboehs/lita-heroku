@@ -79,9 +79,9 @@ module Lita
           last_update = Time.now.to_i - 2
           text_response = String.new
 
-          while line = stdout_and_stderr.gets
+          while char = stdout_and_stderr.getc
             text.gsub!("```", "")
-            text += line
+            text += char
             text_response = "```#{text}```"
             if Time.now.to_i - last_update > 2
               last_update = Time.now.to_i
