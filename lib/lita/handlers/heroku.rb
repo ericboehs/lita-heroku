@@ -9,7 +9,8 @@ module Lita
 
       route(/^hk\s+([^ ]+)\s+(.+)/, :heroku_cmd, command: true, help: {
         "hk [app name] [command]" => "example: 'lita hk production ps'",
-        "hk [app name] deploy" => "example: 'lita hk production deploy'"
+        "hk [app name] deploy" => "example: 'lita hk production deploy'",
+        "hk [app name] psql [query]" => "example: 'lita hk production psql select * from users'"
       })
 
       def heroku_cmd(response)
@@ -17,6 +18,9 @@ module Lita
         command = response.matches[0][1]
         if command.start_with? "deploy"
           heroku_deploy response
+        elsif command.start_with? "psql"
+          command = command[5..-1]
+          stream_command response, "echo \"#{command}\" | #{heroku_bin} pg:psql -a #{config.app_prefix}#{environment}"
         else
           stream_command response, "#{heroku_bin} #{command} -a #{config.app_prefix}#{environment}"
         end
@@ -84,10 +88,12 @@ module Lita
             text += char
             text_response = "```#{text}```"
             if Time.now.to_i - last_update > 2
+              text_response = text_response[0..3600] + "```\nTruncated (3600 of #{text_response.length})..." if text_response.length > 3600
               last_update = Time.now.to_i
               update_response channel, timestamp, text_response
             end
           end
+          text_response = text_response[0..3600] + "```\nTruncated (3600 of #{text_response.length})..." if text_response.length > 3600
           update_response channel, timestamp, text_response
         end
       end
